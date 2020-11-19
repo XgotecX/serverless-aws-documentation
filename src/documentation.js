@@ -29,7 +29,7 @@ function _mapToObj(map) {
  * the basic ones, so we need to make sure we only look for
  * the appropriate properties.
  */
-function determinePropertiesToGet (type) {
+function determinePropertiesToGet(type) {
   const defaultProperties = ['description', 'summary']
   let result = defaultProperties
   switch (type) {
@@ -46,7 +46,7 @@ function determinePropertiesToGet (type) {
 
 var autoVersion;
 
-module.exports = function() {
+module.exports = function () {
   return {
     _createDocumentationPart: function _createDocumentationPart(part, def, knownLocation) {
       const location = part.locationProps.reduce((loc, property) => {
@@ -99,17 +99,17 @@ module.exports = function() {
         restApiId: this.restApiId,
         documentationVersion: this.getDocumentationVersion(),
       }).then(() => {
-          const msg = 'documentation version already exists, skipping upload';
-          console.info('-------------------');
-          console.info(msg);
-          return Promise.reject(msg);
-        }, err => {
-          if (err.message === 'Invalid Documentation version specified') {
-            return Promise.resolve();
-          }
+        const msg = 'documentation version already exists, skipping upload';
+        console.info('-------------------');
+        console.info(msg);
+        return Promise.reject(msg);
+      }, err => {
+        if (err.message === 'Invalid Documentation version specified') {
+          return Promise.resolve();
+        }
 
-          return Promise.reject(err);
-        })
+        return Promise.reject(err);
+      })
         .then(() =>
           aws.request('APIGateway', 'getDocumentationParts', {
             restApiId: this.restApiId,
@@ -209,7 +209,7 @@ module.exports = function() {
           resource.Properties.RequestParameters = {};
         }
 
-        documentationPart.forEach(function(qp) {
+        documentationPart.forEach(function (qp) {
           const source = `method.request.${mapPath}.${qp.name}`;
           if (resource.Properties.RequestParameters.hasOwnProperty(source)) return; // don't mess with existing config
           resource.Properties.RequestParameters[source] = qp.required || false;
@@ -223,29 +223,31 @@ module.exports = function() {
         const methodLogicalId = this.getMethodLogicalId(resourceName, eventTypes.http.method);
         const resource = this.cfTemplate.Resources[methodLogicalId];
 
-        resource.DependsOn = new Set();
-        this.addMethodResponses(resource, eventTypes.http.documentation);
-        this.addRequestModels(resource, eventTypes.http.documentation);
-        if (!this.options['doc-safe-mode']) {
-          this.addDocumentationToApiGateway(
-            resource,
-            eventTypes.http.documentation.requestHeaders,
-            'header'
-          );
-          this.addDocumentationToApiGateway(
-            resource,
-            eventTypes.http.documentation.queryParams,
-            'querystring'
-          );
-          this.addDocumentationToApiGateway(
+        if (resource !== undefined) {
+          resource.DependsOn = new Set();
+          this.addMethodResponses(resource, eventTypes.http.documentation);
+          this.addRequestModels(resource, eventTypes.http.documentation);
+          if (!this.options['doc-safe-mode']) {
+            this.addDocumentationToApiGateway(
+              resource,
+              eventTypes.http.documentation.requestHeaders,
+              'header'
+            );
+            this.addDocumentationToApiGateway(
+              resource,
+              eventTypes.http.documentation.queryParams,
+              'querystring'
+            );
+            this.addDocumentationToApiGateway(
               resource,
               eventTypes.http.documentation.pathParams,
               'path'
-          );
-        }
-        resource.DependsOn = Array.from(resource.DependsOn);
-        if (resource.DependsOn.length === 0) {
-          delete resource.DependsOn;
+            );
+          }
+          resource.DependsOn = Array.from(resource.DependsOn);
+          if (resource.DependsOn.length === 0) {
+            delete resource.DependsOn;
+          }
         }
       }
     },
